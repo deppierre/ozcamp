@@ -1,4 +1,4 @@
-import pymongo, os
+import pymongo, os, random
 from dotenv import load_dotenv
 
 class Mongodb:
@@ -29,15 +29,25 @@ class Mongodb:
 
         newNamespace.bulk_write(self.operations)
 
-    def find(self, collection):
+    def findOneRand(self, filter, collection):
         newNamespace = self.getNamespace(collection)
+        coll_size = newNamespace.count()
 
-        return [ x for x in newNamespace.find() ]
+        while True:
+            rand_skip = random.randint(0, coll_size)
+
+            for doc in newNamespace.find(filter).skip(rand_skip).limit(1):
+                if doc is not None: return doc
 
     def findOne(self, filter, collection):
         newNamespace = self.getNamespace(collection)
 
         return newNamespace.find_one(filter)
+
+    def updateOne(self, filter, new_value, collection):
+        newNamespace = self.getNamespace(collection)
+
+        newNamespace.update_one(filter, new_value)
 
     @classmethod
     def newConnection(self):

@@ -3,7 +3,7 @@ import mdb, proxy
 if __name__ == "__main__":    
 
     myProx = proxy.Proxy()
-    myProx.insertNewIP()
+    myProx.insertNewIPsFromFile("http_proxies.txt")
 
     if len(myProx.proxy_list) > myProx.nb_proxy / 2:
         myMongodb = mdb.Mongodb()
