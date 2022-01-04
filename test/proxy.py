@@ -9,7 +9,7 @@ class Proxy:
     
     max_sleep = 5
     nb_proxy = 25
-    max_try = 5
+    max_try = 10
 
     def __init__(self):
         self.collection = "proxy"
@@ -30,7 +30,8 @@ class Proxy:
                 self.proxy_list.append({
                     "_id": newId,
                     "ipProxy": newIp,
-                    "working": True
+                    "working": True,
+                    "count_fail": 0
                 })
 
     def insertNewIPsFromFile(self, path):
@@ -39,7 +40,8 @@ class Proxy:
                 self.proxy_list.append({
                     "_id": self.id,
                     "ipProxy": "http://" + newIp.strip(),
-                    "working": True
+                    "working": True,
+                    "count_fail": 0
                 })
                 self.id += 1
             print("Info: {0} addresses inserted from the file: {1}".format(self.id, path))
@@ -58,8 +60,8 @@ class Proxy:
         }
 
         while nbTry <= Proxy.max_try:
+            newIP = self.getRandomIp()
             try:
-                newIP = self.getRandomIp()
                 if newIP is None: raise Exception("Error: No proxy available")
                 print("Info: Try {0} with proxy: {1}".format(nbTry, newIP))
 
@@ -67,9 +69,9 @@ class Proxy:
                 response = session.get(URL, timeout = 10, proxies = {"http": newIP, "https": newIP}, headers=headers)
                 return response.content
             except Exception as e:
-                # print("Error: {0}\n next attempt ...".format(str(e)))
                 print("Error: next attempt ...")
-                if newIP is not None: self.myMongodb.updateOne(collection=self.collection, filter={"ipProxy":newIP}, new_value={"$set": {"working": False}})
+                if newIP is not None: self.myMongodb.updateOne(collection=self.collection, filter={"ipProxy":newIP}, new_value={"$inc": {"count_fail": 1}})
+                #self.myMongodb.updateOne(collection=self.collection, filter={"ipProxy":newIP}, new_value={"$set": {"working": False}})
             nbTry += 1
         raise Exception("Error: No proxy available")
 

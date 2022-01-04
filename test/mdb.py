@@ -24,6 +24,11 @@ class Mongodb:
         newNamespace.drop()
         newNamespace.insert_many(documents)
 
+    def insertOne(self, collection, document):
+        newNamespace = self.getNamespace(collection)
+
+        newNamespace.insert_one(document)
+
     def bulkWrite(self, collection):
         newNamespace = self.getNamespace(collection)
 
@@ -35,7 +40,6 @@ class Mongodb:
 
         while True:
             rand_skip = random.randint(0, coll_size)
-
             for doc in newNamespace.find(filter).skip(rand_skip).limit(1):
                 if doc is not None: return doc
 
