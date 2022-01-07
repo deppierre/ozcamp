@@ -1,1 +1,3 @@
 test/.env
+project/lib/.env
+project/lib/http_proxies.txt

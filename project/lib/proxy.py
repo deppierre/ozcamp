@@ -1,38 +1,25 @@
 from time import sleep
-from pymongo import collection
-import requests, mdb, random, time
-from fp.fp import FreeProxy
+import requests, random
 
 class Proxy:
-
-    myMongodb = mdb.Mongodb()
     
     max_sleep = 5
     nb_proxy = 25
     max_try = 10
 
-    def __init__(self):
+    def __init__(self, mdbClient=None):
+
+        self.myMongodb = mdbClient
+
         self.collection = "proxy"
         self.proxy_list = []
         self.id = 1
         self.proxy_errors = set()
 
     def getRandomIp(self):
-        ip = self.myMongodb.findOneRand(filter={"working":True}, collection = self.collection)
+        ip = self.myMongodb.findOneRand(collection = self.collection, filter={"working":True})
 
         return ip["ipProxy"]
-
-    def insertNewIP(self):
-        for newId in range(1, Proxy.nb_proxy + 1):
-            print("Info: Progress ... {0} %".format(round(( 100 * newId ) / Proxy.nb_proxy) ))
-            newIp = FreeProxy(rand=True, timeout=1, anonym=True, country_id=['AU','US','IN','HK','SG']).get()
-            if newIp is not None and 'http://' in newIp:
-                self.proxy_list.append({
-                    "_id": newId,
-                    "ipProxy": newIp,
-                    "working": True,
-                    "count_fail": 0
-                })
 
     def insertNewIPsFromFile(self, path):
         with open(path, 'r') as f:
@@ -44,13 +31,13 @@ class Proxy:
                     "count_fail": 0
                 })
                 self.id += 1
-            print("Info: {0} addresses inserted from the file: {1}".format(self.id, path))
+            print("Info: {0} addresses detected in the file: {1}.".format(self.id, path))
 
     def sleep(self):
         sleep_time = random.randint(1, Proxy.max_sleep)
-        time.sleep(sleep_time)
+        sleep(sleep_time)
         
-        print("Info: next call in {}s".format(sleep_time))
+        print("Info: Next call in {}s".format(sleep_time))
 
     def getContent(self, URL):
         nbTry = 1
@@ -60,20 +47,21 @@ class Proxy:
         }
 
         while nbTry <= Proxy.max_try:
+            if nbTry == Proxy.max_try: raise Exception("Error: Too many attempts ({0} for URL: {1}).".format(nbTry, URL))
             newIP = self.getRandomIp()
             try:
-                if newIP is None: raise Exception("Error: No proxy available")
-                print("Info: Try {0} with proxy: {1}".format(nbTry, newIP))
+                if newIP is None: raise Exception("Error: No proxy available.")
 
                 session = requests.session()
                 response = session.get(URL, timeout = 10, proxies = {"http": newIP, "https": newIP}, headers=headers)
+                print("Info: Try {0} with proxy: {1}.".format(nbTry, newIP))
+
                 return response.content
-            except Exception as e:
-                print("Error: next attempt ...")
+            except Exception:
+                print("Warning: Next attempt ({})...".format(nbTry + 1))
                 if newIP is not None: self.myMongodb.updateOne(collection=self.collection, filter={"ipProxy":newIP}, new_value={"$inc": {"count_fail": 1}})
                 #self.myMongodb.updateOne(collection=self.collection, filter={"ipProxy":newIP}, new_value={"$set": {"working": False}})
             nbTry += 1
-        raise Exception("Error: No proxy available")
 
 if __name__ == "__main__":
     myProxy = Proxy()
