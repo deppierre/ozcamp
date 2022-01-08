@@ -28,7 +28,7 @@ def refreshListing(bulk=False):
                     directory["address"] = soup_park.find(class_="sabai-directory-location").text.strip()
                 if soup_park.find(class_="sabai-directory-contact-tel") is not None:
                     directory["phone"] = soup_park.find(class_="sabai-directory-contact-tel").text.strip()
-                if soup_park.find(class_="sabai-directory-contact-tel") is not None:
+                if soup_park.find(class_="sabai-directory-contact-email") is not None:
                     directory["email"] = soup_park.find(class_="sabai-directory-contact-email").text.strip()
                 if soup_park.find(class_="sabai-directory-contact-website") is not None:
                     directory["urlWebsite"] = soup_park.find(class_="sabai-directory-contact-website").text.strip()
