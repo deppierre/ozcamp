@@ -39,7 +39,7 @@ class Proxy:
         
         print("Info: Next call in {}s".format(sleep_time))
 
-    def getContent(self, URL):
+    def getContent(self, URL, proxy=True, ThrowError=False):
         nbTry = 1
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0',
@@ -48,17 +48,23 @@ class Proxy:
 
         while nbTry <= Proxy.max_try:
             if nbTry == Proxy.max_try: raise Exception("Error: Too many attempts ({0} for URL: {1}).".format(nbTry, URL))
-            newIP = self.getRandomIp()
             try:
-                if newIP is None: raise Exception("Error: No proxy available.")
-
                 session = requests.session()
-                response = session.get(URL, timeout = 10, proxies = {"http": newIP, "https": newIP}, headers=headers)
-                print("Info: Try {0} with proxy: {1}.".format(nbTry, newIP))
+                if proxy:
+                    newIP = self.getRandomIp()
+                    if newIP is None: raise Exception("Error: No proxy available.")
+
+                    response = session.get(URL, timeout = 10, proxies = {"http": newIP, "https": newIP}, headers=headers)
+                    print("Info: Try {0} with proxy: {1}.".format(nbTry, newIP))
+                else:
+                    response = session.get(URL, timeout = 10, headers=headers)
+                    print("Info: Try {0} without proxy.".format(nbTry))
 
                 return response.content
-            except Exception:
+
+            except Exception as e:
                 print("Warning: Next attempt ({})...".format(nbTry + 1))
+                if ThrowError: print(e)
                 if newIP is not None: self.myMongodb.updateOne(collection=self.collection, filter={"ipProxy":newIP}, new_value={"$inc": {"count_fail": 1}})
                 #self.myMongodb.updateOne(collection=self.collection, filter={"ipProxy":newIP}, new_value={"$set": {"working": False}})
             nbTry += 1

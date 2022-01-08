@@ -20,6 +20,7 @@ def refreshListing(bulk=False):
                 soup_park = BeautifulSoup(r2, 'html.parser') 
                 directory = {
                     "name": name,
+                    "type": "Holiday Park",
                     "urlSource": url,
                 }
 
