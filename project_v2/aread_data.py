@@ -47,11 +47,11 @@ async def process_site(session, site):
         except Exception as err:
             print(f"An exception occurred ({URL})\n{err}")
 
-async def main(loop):
+async def main():
     session = AsyncHTMLSession()
     added_tasks = []
 
-    with open("nsw_campings.txt", "r", encoding="utf-8") as sites:
+    with open("test.txt", "r", encoding="utf-8") as sites:
         process_start_time = time.time()
 
         batch_size = 10
@@ -70,12 +70,14 @@ async def main(loop):
             await asyncio.sleep(0)  # Let other tasks run
 
             batch_duration = time.time() - batch_start_time
-            print(f"New batch {batch_size} processed in {batch_duration:.2f} seconds")
+            print(f"New batch ({batch_size}) processed in {batch_duration:.2f} seconds")
  
     print(bookings)
     process_duration = time.time() - process_start_time
     print(f"All batches processed in {process_duration:.2f} seconds")
     await session.close()
 
-loop = asyncio.get_event_loop()
-results = loop.run_until_complete(main(loop))
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
