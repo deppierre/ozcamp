@@ -2,3 +2,4 @@ test/.env
 project/lib/.env
 project/proxies.txt
 project/lib/http_proxies.txt
+prepare.sh

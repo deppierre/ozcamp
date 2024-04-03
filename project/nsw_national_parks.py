@@ -1,8 +1,10 @@
-#python -m pip install pymongo,bs4
+#!/usr/bin/env python3.9
+
+import pymongo
+import re
 import lib.mdb as mdb
 import lib.proxy as proxy
 
-import pymongo, re
 from bs4 import BeautifulSoup
 
 def refreshListing(bulk=False):

@@ -5,7 +5,7 @@ class Mongodb:
     load_dotenv()
 
     login = os.environ.get('login')
-    password = password=os.environ.get('password')
+    password = os.environ.get('password')
 
     def __init__(self, database, collection):
         self.db = database
@@ -61,6 +61,6 @@ class Mongodb:
 
     @classmethod
     def newConnection(self, db):
-        connection_string = "mongodb+srv://{login}:{password}@testpierre.z01xy.mongodb.net/{db}?retryWrites=true&w=majority".format(login=self.login, password=self.password, db=db)
+        connection_string = "mongodb+srv://{login}:{password}@cluster0.pc1yqzp.mongodb.net/{db}?retryWrites=true&w=majority&appName=Cluster0".format(login=self.login, password=self.password, db=db)
         
         return pymongo.MongoClient(connection_string)
