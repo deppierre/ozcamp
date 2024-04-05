@@ -2,7 +2,7 @@
 
 import calendar
 from datetime import date
-from requests_html import HTMLSession
+from requests_html.requests_html import HTMLSession
 
 today = date.today()
 
@@ -18,12 +18,12 @@ month = calendar.month_name[current_month][0:3]
 
 bookings = []
 
-with open("nsw_campings.txt", "r", encoding="utf-8") as text_file:
+with open("test.txt", "r", encoding="utf-8") as text_file:
     for line in text_file:
         print(f"Processing {line}")
 
         for day in range(current_day, current_day + 1):
-            URL = f"https://{line.strip()}?dateFrom={day:02d}%20{month}%202024&dateTo={day + 1:02d}%20{month}%202024&adults=2"
+            URL = "https://www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/colo-meroo-campground?dateFrom=17%20Apr%202024&dateTo=18%20Apr%202024&adults=2"
 
             try:
                 response_availability = session.get(URL)

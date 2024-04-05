@@ -6,7 +6,12 @@ from bs4 import BeautifulSoup
 URL="https://www.nationalparks.nsw.gov.au/conservation-and-heritage/national-parks"
 URL_DOMAIN=URL.split("/")[2]
 
-response_parks = requests.get(URL, timeout=10)
+#Load all NPs
+try:
+    response_parks = requests.get(URL, timeout=10)
+except Exception as err:
+     print(f"An exception occurred ({URL})\n{err}")
+
 soup_parks = BeautifulSoup(response_parks.content, 'html.parser')
 
 print("Loading ...")
@@ -15,7 +20,12 @@ for site in soup_parks.find_all(class_="headingIcon icon tree visit"):
     park_name = site.text.strip()
     url = site.a['href']
 
-    response_park = requests.get(url, timeout=10)
+#Load all campings
+    try:
+        response_park = requests.get(url, timeout=10)
+    except Exception as err:
+            print(f"An exception occurred ({URL})\n{err}")
+    
     soup_park = BeautifulSoup(response_park.content, 'html.parser')
     campings = soup_park.find_all(class_="scrollingBox__item camping")
     

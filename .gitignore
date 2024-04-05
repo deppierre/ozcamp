@@ -3,3 +3,6 @@ project/lib/.env
 project/proxies.txt
 project/lib/http_proxies.txt
 prepare.sh
+.DS_Store
+project_v2/.DS_Store
+project_v2/__pycache__

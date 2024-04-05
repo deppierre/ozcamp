@@ -1,12 +1,4 @@
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/willandra-group-campground
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/ganguddy-dunns-swamp-campground
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/newnes-campground
 www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/colo-meroo-campground
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/coorongooba-campground
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/sheepskin-hut-campground
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/wheeny-creek-campground
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/deep-pass-campground
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/samual-bollard-campground
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/tin-mines-campground
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/mamanga-campground
-www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/woolpress-bend-campground
+www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/tallow-beach-campground
+www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/hobart-beach-campground
+www.nationalparks.nsw.gov.au/camping-and-accommodation/campgrounds/coree-campground
