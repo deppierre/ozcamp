@@ -6,6 +6,7 @@ import re
 import time
 import os
 import pymongo
+import json
 from dotenv import load_dotenv
 from datetime import date, datetime, timedelta
 from requests_html import AsyncHTMLSession
@@ -15,6 +16,7 @@ load_dotenv()
 
 today = date.today()
 mdb_uri = os.getenv("MONGODB_URI")
+database = "pierre"
 
 #Database
 mdb_client = pymongo.MongoClient(mdb_uri)
@@ -29,106 +31,125 @@ except pymongo.errors.ConnectionFailure:
 
 
 # Extract current month and year
-max_days = 5
+max_days = 2
 current_month = today.month
 current_year = today.year
 current_day = today.day
-current_date = datetime.today()
-one_month_later = today.replace(day=1) + timedelta(days=32)
-one_month_later_iso = one_month_later.isoformat()
 
 nb_days = calendar.monthrange(current_year, current_month)[1]
 month = calendar.month_name[current_month][0:3]
 
-async def mdb_replace(filter, new_doc, client, db="pierre", coll="nswcampings"):
+async def mdb_replace(query, new_doc, client, db="pierre", coll="nsw_campings_availability"):
     try:
         collection = client[db][coll]
-        return collection.replace_one(filter, new_doc, upsert=True)
+        return collection.replace_one(query, new_doc, upsert=True)
     except Exception as err:
             print(f"An exception occurred ({new_doc}\n{err}")
 
-async def get_html_body(session, URL):
+async def get_html_body(session, url):
     try:
-        session = await session.get(URL)
-        await session.html.arender(sleep=1, timeout=20, scrolldown=5)
+        session = await session.get(url)
+        await session.html.arender(sleep=2, timeout=20, scrolldown=5)
     except Exception as err:
-            print(f"An exception occurred ({URL})\n{err}")
-
+            print(f"An exception occurred ({url})\n{err}")
     return session.html
 
-async def process_site(session, site):
+async def process_site(session, url):
+    url_root = url.strip()
+    current_date = datetime.today()
+    
 
+    print(f"# Processing new site: {url_root}")
     new_camping = {
-        "url": "https://" + site,
-        "name": "",
+        "url": url_root,
+        "last_update": current_date,
         "dates_available": []
     }
 
     for day in range(current_day, current_day + max_days):
-        URL = f"https://{site.strip()}?dateFrom={day}%20{month}%202024&dateTo={day + 1}%20{month}%202024&adults=2"
-        print(f"Processing new URL: {URL}")
+        url_search_availability = url_root + f"?dateFrom={day}%20{month}%202024&dateTo={day + 1}%20{month}%202024&adults=2"
+        print(f"## Processing new day: {url_search_availability}")
 
-        htmlbody = await get_html_body(session, URL)
+        htmlbody = await get_html_body(session, url_search_availability)
         soup = BeautifulSoup(htmlbody.html, 'html.parser')
 
         flatpickr_days = soup.find_all(class_="flatpickr-day") #Testing
-        availability = soup.find(class_=re.compile(r"d-flex f5 poppins-bold-font mb-2 ml-auto"))
+        script_tag = soup.find("script", {"type": "application/ld+json"})
+        nb_availability = soup.find_all(class_=re.compile(r"d-flex f5 poppins-bold-font mb-2 ml-auto text-green"))
         camping_name = soup.find(class_="show-inline vertical-align-middle")
         
         name = camping_name.text.strip()
         new_camping["name"] = name
 
-        #Changer availability to filter find_all et pas uniquement un seul available. Il doit y avoir dautre trucs a louer que des tentes
-        if availability.text == "Available":
-            camping_rez_url = soup.find(class_="float-right bg-teal bttn bttn-primary no-underline text-white")
-            camping_type = soup.find(class_="availability-description f5 poppins-font mb-3 svelte-9wcegm")
+        #JSON data
+        if script_tag:
+            json_content = json.loads(script_tag.string)
+            new_camping["coordinates"] = {
+                "latitude": json_content["geo"]["latitude"],
+                "longitude": json_content["geo"]["longitude"]
+            }
+            if "@type" in json_content["address"]:
+                del json_content["address"]["@type"]
+            new_camping["address"] = json_content["address"]
+        else:
+            print("No script tag with type 'application/ld+json' found.")
+
+        if len(nb_availability) > 0 and nb_availability[0].text.strip() == "Available":
+            camping_rez_url = soup.find(class_="float-right bg-teal bttn bttn-primary no-underline text-white")['href'].replace(' ', ''),
+            camping_type = soup.find_all(class_="availability-description f5 poppins-font mb-3 svelte-9wcegm")
 
             desired_date = current_date + timedelta(days=day - current_date.day)
             later_date = datetime(desired_date.year, desired_date.month, desired_date.day, 0, 0, 0, 0)
 
-            new_camping["dates_available"].append({
-                "ts": later_date,
-                "url": camping_rez_url['href'].replace(' ', ''),
-                "type": camping_type.find('strong').text
-            })
+            try:
+                new_camping["dates_available"].append({
+                    "ts": later_date,
+                    "url": url_search_availability,
+                    "nb_sites": int(len(nb_availability))
+                })
+            except AttributeError:
+                print(f"Error processing this camping URL: {url_search_availability}")
 
     replace_result = await mdb_replace(
-        {"name": name},
+        {"url": url_root},
         new_camping,
         mdb_client
     )
 
     if replace_result:
         if replace_result.matched_count > 0:
-            print(f"{replace_result.matched_count} documents updated ({name})")
+            print(f"{replace_result.matched_count} locations updated ({name})")
         else:
-            print(f"{replace_result.inserted_id} documents inserted ({name})")
+            print(f"New location created ({name})\n\t- {replace_result.upserted_id}")
 
 async def main():
     session = AsyncHTMLSession()
     added_tasks = []
 
-    with open("test.txt", "r", encoding="utf-8") as sites:
-        process_start_time = time.time()
+    # Retrieve camping sites from MongoDB collection
+    batch_size = 10
+    camping_collection = mdb_client[database]["nsw_campings"]
+    camping_sites = list(camping_collection.aggregate(
+        [
+            {"$sort":{"last_update":1}},
+            {"$project": {"_id":0, "url":1}}
+        ]
+    ))
+    process_start_time = time.time()
 
-        batch_size = 10
-        while True:
-            batch_start_time = time.time()
-            batch = [next(sites, None) for _ in range(batch_size)]
-            batch = [site for site in batch if site is not None]  # Remove None elements
+    for i in range(0, len(camping_sites), batch_size):
+        batch_start_time = time.time()
+        batch = camping_sites[i:i+batch_size]
 
-            if not batch:
-                break  # End of file
+        tasks = [process_site(session, site["url"]) for site in batch]
+        added_tasks.extend(tasks)
 
-            tasks = [process_site(session, site) for site in batch]
-            added_tasks.extend(tasks)
+        await asyncio.gather(*tasks)
+        await asyncio.sleep(0)  # Let other tasks run
 
-            await asyncio.gather(*tasks)
-            await asyncio.sleep(0)  # Let other tasks run
+        batch_duration = time.time() - batch_start_time
+        print(f"New batch ({batch_size}) processed in {batch_duration:.2f} seconds")
 
-            batch_duration = time.time() - batch_start_time
-            print(f"New batch ({batch_size}) processed in {batch_duration:.2f} seconds")
- 
     process_duration = time.time() - process_start_time
     print(f"All batches processed in {process_duration:.2f} seconds")
     await session.close()
