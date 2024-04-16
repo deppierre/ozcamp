@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 mdb_uri = os.getenv("MONGODB_URI")
+api_key = os.getenv("GOOGLE_MAP_API_KEY")
 database = "pierre"
 
 #Database
@@ -89,11 +90,12 @@ html_template = """
             }});
         }}
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgTsxuGNQMkjVoiFktxgkP-MgNRqAbpyE&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=APIKEY&callback=initMap" async defer></script>
 </body>
 </html>
 """
-locations_js = str(locations_array).replace("'", '"')  # Convert to JSON format
+locations_js = str(locations_array).replace("APIKEY", api_key)  # Convert to JSON format
+html_template = html_template.format(locations=locations_js)
 html_template = html_template.format(locations=locations_js)
 
 # Write HTML to a file
