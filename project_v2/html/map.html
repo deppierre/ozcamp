@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NSW National Park Campings</title>
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        // Sample data (replace this with your actual data)
+        var locations = [
+            { name: 'Creel Bay cottages', lat: -36.3482900000001, lng: 148.601390000001 },
+            // Add more locations as needed
+        ];
+
+        function initMap() {
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 5,
+                minZoom: 5,
+                maxZoom: 7,
+                center: { lat: -31.840233, lng: 145.612793 } // Center in NSW
+            });
+
+            // Loop through locations and add markers
+            locations.forEach(function (location) {
+                var marker = new google.maps.Marker({
+                    position: { lat: location.lat, lng: location.lng },
+                    map: map,
+                    title: location.name
+                });
+
+                var infoWindow = new google.maps.InfoWindow({
+                    content: '<h3>' + location.name + '</h3><p>' + location.details + '</p>'
+                });
+
+                marker.addListener('click', function () {
+                    infoWindow.open(map, marker);
+                });
+            });
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgTsxuGNQMkjVoiFktxgkP-MgNRqAbpyE&callback=initMap" async defer></script>
+</body>
+</html>

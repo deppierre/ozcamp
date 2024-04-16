@@ -33,5 +33,5 @@ for site in soup_parks.find_all(class_="headingIcon icon tree visit"):
     if campings:
         for camping in campings:
             URL_CAMPING=URL_DOMAIN + camping.find("h3").a['href']
-            with open("nsw_campings.txt", "a", encoding="utf-8") as text_file:
+            with open("data/nsw_campings.txt", "a", encoding="utf-8") as text_file:
                 text_file.write(URL_CAMPING + "\n")
