@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 mdb_uri = os.getenv("MONGODB_URI")
+myapi_key = os.getenv("GOOGLE_MAP_API_KEY")
 
 #Database
 mdb_client = pymongo.MongoClient(mdb_uri)
@@ -45,7 +46,7 @@ def index():
         except KeyError:
             print(f"Skip this camping ... {name}")
 
-    return render_template('index.html', locations=locations_array)
+    return render_template('index.html', locations=locations_array, api_key=myapi_key)
 
 if __name__ == '__main__':
     app.run(debug=True)

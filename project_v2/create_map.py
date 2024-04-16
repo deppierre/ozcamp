@@ -8,7 +8,6 @@ load_dotenv()
 
 mdb_uri = os.getenv("MONGODB_URI")
 api_key = os.getenv("GOOGLE_MAP_API_KEY")
-database = "pierre"
 
 #Database
 mdb_client = pymongo.MongoClient(mdb_uri)
@@ -22,7 +21,7 @@ except pymongo.errors.ConnectionFailure as e:
     print(e)
     exit(1)
 
-nsw_campings = mdb_client[database]["nsw_campings_availability"]
+nsw_campings = mdb_client["pierre"]["nsw_campings_availability"]
 campings_documents = nsw_campings.find({})
 
 # Sample data
@@ -90,16 +89,15 @@ html_template = """
             }});
         }}
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=APIKEY&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={APIKEY}&callback=initMap" async defer></script>
 </body>
 </html>
 """
-locations_js = str(locations_array).replace("APIKEY", api_key)  # Convert to JSON format
-html_template = html_template.format(locations=locations_js)
-html_template = html_template.format(locations=locations_js)
+locations_js = str(locations_array).replace("'", '"')  # Convert to JSON format
+html_template = html_template.format(locations=locations_js, APIKEY=api_key)
 
 # Write HTML to a file
-with open('map_display.html', 'w') as file:
+with open('html/map_display.html', 'w') as file:
     file.write(html_template)
 
 print("HTML file generated successfully!")
